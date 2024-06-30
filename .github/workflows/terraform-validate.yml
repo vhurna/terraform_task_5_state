@@ -1,0 +1,40 @@
+name: Terraform Validate
+
+run-name: ${{ github.actor }} - ${{ github.ref_name }}
+
+on:
+  pull_request:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+jobs:
+  terraform_validate:
+    name: "Format and Validate Code"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.8.4
+
+    - name: Check backend configuration
+      run: |
+        if ! grep -q 'backend "azurerm"' ./*.tf; then
+          echo "Azure backend configuration not found!"
+          exit 1
+        fi
+        echo "Azure backend configuration is present!"
+    
+    - name: Terraform Fmt
+      run: terraform fmt -check -recursive -diff
+  
+    - name: Terraform Init
+      run: terraform init
+  
+    - name: Terraform Validate
+      run: terraform validate
